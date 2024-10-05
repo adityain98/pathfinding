@@ -15,8 +15,8 @@
             'wall-node': node.isWall,
           }
         ]"
-        @click.left="setWall(node)"
-        @click.right="setWeight(node)"
+        @click.left="setModifier(node, 'isWall')"
+        @click.right="setModifier(node, 'isWeightNode')"
       >
           {{ node.weight }}
       </div>
@@ -75,11 +75,19 @@ export default {
       this.startCoordinate = defaultStartCoordinate
       this.endCoordinate = defaultEndCoordinate
     },
-    setWall (node) {
-      node.isWall = !node.isWall
+    resetModifierNode (node, selectedModifier) {
+      const modifierKey = ['isWall', 'isWeightNode']
+
+      for (const modifier of modifierKey) {
+        if (modifier === selectedModifier) continue
+
+        node[modifier] = false
+      }
     },
-    setWeight (node) {
-      node.isWeightNode = !node.isWeightNode
+    setModifier (node, modifier = 'isWall') {
+      this.resetModifierNode(node, modifier)
+
+      node[modifier] = !node[modifier]
     },
     timer (ms) {
       return new Promise(res => setTimeout(res, ms))
