@@ -266,14 +266,14 @@ export default {
         // const downLeftSideCoordinate = this.downLeftSideCoordinate(node)
         // const upLeftSideCoordinate = this.upLeftSideCoordinate(node)
 
-        await this.checkNode(node, this.upSideCoordinate())
-        await this.checkNode(node, this.upRightSideCoordinate(), true)
-        await this.checkNode(node, this.rightSideCoordinate())
-        await this.checkNode(node, this.downRightSideCoordinate(), true)
-        await this.checkNode(node, this.downSideCoordinate())
-        await this.checkNode(node, this.downLeftSideCoordinate(), true)
-        await this.checkNode(node, this.leftSideCoordinate())
-        await this.checkNode(node, this.upLeftSideCoordinate(), true)
+        await this.checkNode(node, this.upSideCoordinate(node))
+        await this.checkNode(node, this.upRightSideCoordinate(node), true)
+        await this.checkNode(node, this.rightSideCoordinate(node))
+        await this.checkNode(node, this.downRightSideCoordinate(node), true)
+        await this.checkNode(node, this.downSideCoordinate(node))
+        await this.checkNode(node, this.downLeftSideCoordinate(node), true)
+        await this.checkNode(node, this.leftSideCoordinate(node))
+        await this.checkNode(node, this.upLeftSideCoordinate(node), true)
 
 
         if (!this.openNodes.length) {
