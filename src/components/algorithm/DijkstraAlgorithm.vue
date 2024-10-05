@@ -120,13 +120,13 @@ export default {
     leftSideCoordinate (node) {
       return [node.coordinateX - 1, node.coordinateY]
     },
-    checkNode (coordinate) {
+    async checkNode (parentNode, coordinate, isDiagonal) {
       if (
           coordinate[0] < 0 ||
           coordinate[0] >= this.gridWitdh ||
           coordinate[1] < 0 ||
           coordinate[1] >= this.gridHeight
-      ) return false
+      ) return null
 
       const node = this.grid[coordinate[1]][coordinate[0]]
 
@@ -136,27 +136,30 @@ export default {
         node.weight !== maxWeight ||
         node.isVisited === true ||
         node.isStartNode === true
-      ) return false
+      ) return null
+
+      node.parentNode = parentNode.coordinate
+      node.weight = parentNode.weight + this.distanceWeight
+
+      if (isDiagonal) {
+        node.weight = node.weight + 4
+      }
+      
+      if (node.isEndNode) {
+        this.looping = false
+        this.visualizePath(node)
+        return
+      }
+      
+      node.isVisited = true
+
+      this.pushOpenNode(node)
+      await this.timer(50)
 
       return true
     },
-    async pushOpenNodes (parentNode, ...args) {
-      for (const node of args ) {
-        if (node) {
-          node.parentNode = parentNode.coordinate
-          node.weight = parentNode.weight + this.distanceWeight
-          
-          if (node.isEndNode) {
-            this.looping = false
-            this.visualizePath(node)
-            return
-          }
-          
-          node.isVisited = true
-          this.openNodes.push(node)
-          await this.timer(50)
-        }
-      }
+    async pushOpenNode (node) {
+      this.openNodes.push(node)
     },
     async visualizePath (endNode) {
       let pathFound = false
@@ -189,12 +192,10 @@ export default {
         const downSideCoordinate = this.downSideCoordinate(node)
         const leftSideCoordinate = this.leftSideCoordinate(node)
 
-        const upSideNode = this.checkNode(upSideCoordinate) ? this.grid[upSideCoordinate[1]][upSideCoordinate[0]] : null
-        const rightSideNode = this.checkNode(rightSideCoordinate) ? this.grid[rightSideCoordinate[1]][rightSideCoordinate[0]] : null
-        const downSideNode = this.checkNode(downSideCoordinate) ? this.grid[downSideCoordinate[1]][downSideCoordinate[0]] : null
-        const leftSideNode = this.checkNode(leftSideCoordinate) ? this.grid[leftSideCoordinate[1]][leftSideCoordinate[0]] : null
-
-        await this.pushOpenNodes(node, upSideNode, rightSideNode, downSideNode, leftSideNode)
+        await this.checkNode(node, upSideCoordinate)
+        await this.checkNode(node, rightSideCoordinate)
+        await this.checkNode(node, downSideCoordinate)
+        await this.checkNode(node, leftSideCoordinate)
 
         if (!this.openNodes.length) {
           this.looping = false
