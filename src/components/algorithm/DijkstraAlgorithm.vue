@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div @mousedown.left="test">
     <div v-for="(xGrid, yIndex) in grid" :key="yIndex" class="x-grid">
       <div
         v-for="node in xGrid"
@@ -16,9 +16,9 @@
         ]"
         @click="setWall(node)"
       >
+          {{ node.weight }}
       </div>
     </div>
-    <div>{{filteredOpenNodes}}</div>
 
     <button @click="startAlgorithm()">start</button>
     <button @click="initGrid()">Reset</button>
@@ -106,7 +106,6 @@ export default {
         }
         this.grid.push(yArray)
       }
-      console.log(JSON.parse(JSON.stringify(this.grid)))
     },
     upSideCoordinate (node) {
       return [node.coordinateX, node.coordinateY - 1]
@@ -127,32 +126,41 @@ export default {
       return [node.coordinateX + 1, node.coordinateY + 1]
     },
     downLeftSideCoordinate (node) {
-      return [node.coordinateX - 1, node.coordinateY - 1]
-    },
-    upLeftSideCoordinate (node) {
       return [node.coordinateX - 1, node.coordinateY + 1]
     },
-    async checkNode (parentNode, coordinate, isDiagonal) {
-      if (!this.looping) return
-
+    upLeftSideCoordinate (node) {
+      return [node.coordinateX - 1, node.coordinateY - 1]
+    },
+    checkNodeInsideGrid (coordinate) {
       if (
-          coordinate[0] < 0 ||
-          coordinate[0] >= this.gridWitdh ||
-          coordinate[1] < 0 ||
-          coordinate[1] >= this.gridHeight
-      ) return null
+        coordinate[0] < 0 ||
+        coordinate[0] >= this.gridWitdh ||
+        coordinate[1] < 0 ||
+        coordinate[1] >= this.gridHeight
+      ) return false
+
+      return true
+    },
+    async checkNode (parentNode, coordinate, isDiagonal) {
+      // if (!this.looping) return
+
+      if (!this.checkNodeInsideGrid(coordinate)) return null
 
       const node = this.grid[coordinate[1]][coordinate[0]]
 
       if (
         node === undefined ||
         node.isWall === true ||
-        node.isVisited === true ||
         node.isStartNode === true
       ) return null
 
       let addedWeight = 0
-      addedWeight = parentNode.weight + isDiagonal ? this.diagonalDistanceWeight : this.distanceWeight
+      addedWeight = parentNode.weight + this.distanceWeight
+      if (isDiagonal) {
+        addedWeight = parentNode.weight + this.diagonalDistanceWeight
+      }
+
+      if (addedWeight >= node.weight) return
 
       node.parentNode = parentNode.coordinate
       node.weight = addedWeight
@@ -177,10 +185,29 @@ export default {
       let pathFound = false
       const shortestPath = []
       let node = endNode
+      shortestPath.unshift(node)
 
+      const arrayCoordinate = this.getAllDirectionOfNode(node)
+      let nearestNodeCoordinate = null
+
+      for (let coordinate of arrayCoordinate) {
+        if (!this.checkNodeInsideGrid(coordinate)) continue
+
+        if (!nearestNodeCoordinate) {
+          nearestNodeCoordinate = coordinate
+          continue
+        }
+
+        if (this.grid[nearestNodeCoordinate[1]][nearestNodeCoordinate[0]].weight > this.grid[coordinate[1]][coordinate[0]].weight) {
+          nearestNodeCoordinate = coordinate
+        }
+      }
+
+      node = this.grid[nearestNodeCoordinate[1]][nearestNodeCoordinate[0]]
+
+      
       while (!pathFound) {
         shortestPath.unshift(node)
-
         if (node.isStartNode) pathFound = true
 
         node = this.grid[node.parentNode[1]][node.parentNode[0]]
@@ -191,6 +218,18 @@ export default {
         await this.timer(100)
       }
     },
+    getAllDirectionOfNode (node) {
+      const upSideCoordinate = this.upSideCoordinate(node)
+      const rightSideCoordinate = this.rightSideCoordinate(node)
+      const downSideCoordinate = this.downSideCoordinate(node)
+      const leftSideCoordinate = this.leftSideCoordinate(node)
+      const upRightSideCoordinate = this.upRightSideCoordinate(node)
+      const downRightSideCoordinate = this.downRightSideCoordinate(node)
+      const downLeftSideCoordinate = this.downLeftSideCoordinate(node)
+      const upLeftSideCoordinate = this.upLeftSideCoordinate(node)
+
+      return [upSideCoordinate, rightSideCoordinate, downSideCoordinate, leftSideCoordinate, upRightSideCoordinate, downRightSideCoordinate, downLeftSideCoordinate, upLeftSideCoordinate]
+    },
     async startAlgorithm () {
       this.looping = true
       this.openNodes.push(this.grid[this.startCoordinate[1]][this.startCoordinate[0]])
@@ -200,23 +239,24 @@ export default {
         this.openNodes.shift()
 
         const upSideCoordinate = this.upSideCoordinate(node)
-        const upRightSideCoordinate = this.upRightSideCoordinate(node)
         const rightSideCoordinate = this.rightSideCoordinate(node)
-        const downRightSideCoordinate = this.downRightSideCoordinate(node)
         const downSideCoordinate = this.downSideCoordinate(node)
-        const downLeftSideCoordinate = this.downLeftSideCoordinate(node)
         const leftSideCoordinate = this.leftSideCoordinate(node)
+
+        const upRightSideCoordinate = this.upRightSideCoordinate(node)
+        const downRightSideCoordinate = this.downRightSideCoordinate(node)
+        const downLeftSideCoordinate = this.downLeftSideCoordinate(node)
         const upLeftSideCoordinate = this.upLeftSideCoordinate(node)
 
         await this.checkNode(node, upSideCoordinate)
-        await this.checkNode(node, rightSideCoordinate)
-        await this.checkNode(node, downSideCoordinate)
-        await this.checkNode(node, leftSideCoordinate)
-
         await this.checkNode(node, upRightSideCoordinate, true)
+        await this.checkNode(node, rightSideCoordinate)
         await this.checkNode(node, downRightSideCoordinate, true)
+        await this.checkNode(node, downSideCoordinate)
         await this.checkNode(node, downLeftSideCoordinate, true)
+        await this.checkNode(node, leftSideCoordinate)
         await this.checkNode(node, upLeftSideCoordinate, true)
+
 
         if (!this.openNodes.length) {
           this.looping = false
