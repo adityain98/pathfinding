@@ -16,7 +16,6 @@
         ]"
         @click="setWall(node)"
       >
-          {{node.weight}}
       </div>
     </div>
     <div>{{filteredOpenNodes}}</div>
@@ -37,6 +36,7 @@ export default {
       gridWitdh: 20,
       gridHeight: 15,
       distanceWeight: 10,
+      diagonalDistanceWeight: 15,
       nodeTemplate: {
         coordinate: [0, 0],
         coordinateX: 0,
@@ -120,7 +120,21 @@ export default {
     leftSideCoordinate (node) {
       return [node.coordinateX - 1, node.coordinateY]
     },
+    upRightSideCoordinate (node) {
+      return [node.coordinateX + 1, node.coordinateY - 1]
+    },
+    downRightSideCoordinate (node) {
+      return [node.coordinateX + 1, node.coordinateY + 1]
+    },
+    downLeftSideCoordinate (node) {
+      return [node.coordinateX - 1, node.coordinateY - 1]
+    },
+    upLeftSideCoordinate (node) {
+      return [node.coordinateX - 1, node.coordinateY + 1]
+    },
     async checkNode (parentNode, coordinate, isDiagonal) {
+      if (!this.looping) return
+
       if (
           coordinate[0] < 0 ||
           coordinate[0] >= this.gridWitdh ||
@@ -133,17 +147,16 @@ export default {
       if (
         node === undefined ||
         node.isWall === true ||
-        node.weight !== maxWeight ||
         node.isVisited === true ||
         node.isStartNode === true
       ) return null
 
-      node.parentNode = parentNode.coordinate
-      node.weight = parentNode.weight + this.distanceWeight
+      let addedWeight = 0
+      addedWeight = parentNode.weight + isDiagonal ? this.diagonalDistanceWeight : this.distanceWeight
 
-      if (isDiagonal) {
-        node.weight = node.weight + 4
-      }
+      node.parentNode = parentNode.coordinate
+      node.weight = addedWeight
+      node.isVisited = true
       
       if (node.isEndNode) {
         this.looping = false
@@ -151,10 +164,9 @@ export default {
         return
       }
       
-      node.isVisited = true
 
       this.pushOpenNode(node)
-      await this.timer(50)
+      await this.timer(10)
 
       return true
     },
@@ -188,14 +200,23 @@ export default {
         this.openNodes.shift()
 
         const upSideCoordinate = this.upSideCoordinate(node)
+        const upRightSideCoordinate = this.upRightSideCoordinate(node)
         const rightSideCoordinate = this.rightSideCoordinate(node)
+        const downRightSideCoordinate = this.downRightSideCoordinate(node)
         const downSideCoordinate = this.downSideCoordinate(node)
+        const downLeftSideCoordinate = this.downLeftSideCoordinate(node)
         const leftSideCoordinate = this.leftSideCoordinate(node)
+        const upLeftSideCoordinate = this.upLeftSideCoordinate(node)
 
         await this.checkNode(node, upSideCoordinate)
         await this.checkNode(node, rightSideCoordinate)
         await this.checkNode(node, downSideCoordinate)
         await this.checkNode(node, leftSideCoordinate)
+
+        await this.checkNode(node, upRightSideCoordinate, true)
+        await this.checkNode(node, downRightSideCoordinate, true)
+        await this.checkNode(node, downLeftSideCoordinate, true)
+        await this.checkNode(node, upLeftSideCoordinate, true)
 
         if (!this.openNodes.length) {
           this.looping = false
