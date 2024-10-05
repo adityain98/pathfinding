@@ -18,7 +18,6 @@
         @click.left="setModifier(node, 'isWall')"
         @click.right="setModifier(node, 'isWeightNode')"
       >
-          {{ node.weight }}
       </div>
     </div>
 
