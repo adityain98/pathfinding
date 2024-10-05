@@ -9,12 +9,14 @@
           {
             'start-node': node.isStartNode,
             'end-node': node.isEndNode,
+            'weight-node': node.isWeightNode,
             'visited-node': node.isVisited,
             'path-node': node.isPath,
             'wall-node': node.isWall,
           }
         ]"
-        @click="setWall(node)"
+        @click.left="setWall(node)"
+        @click.right="setWeight(node)"
       >
           {{ node.weight }}
       </div>
@@ -75,6 +77,9 @@ export default {
     },
     setWall (node) {
       node.isWall = !node.isWall
+    },
+    setWeight (node) {
+      node.isWeightNode = !node.isWeightNode
     },
     timer (ms) {
       return new Promise(res => setTimeout(res, ms))
@@ -150,7 +155,7 @@ export default {
 
       if (
         node === undefined ||
-        node.isWall === true ||
+        node.isWall ||
         node.isStartNode === true
       ) return null
 
@@ -158,6 +163,10 @@ export default {
       addedWeight = parentNode.weight + this.distanceWeight
       if (isDiagonal) {
         addedWeight = parentNode.weight + this.diagonalDistanceWeight
+      }
+
+      if (node.isWeightNode) {
+        addedWeight += 20
       }
 
       if (addedWeight >= node.weight) return
@@ -185,34 +194,29 @@ export default {
       let pathFound = false
       const shortestPath = []
       let node = endNode
-      shortestPath.unshift(node)
 
-      const arrayCoordinate = this.getAllDirectionOfNode(node)
-      let nearestNodeCoordinate = null
-
-      for (let coordinate of arrayCoordinate) {
-        if (!this.checkNodeInsideGrid(coordinate)) continue
-
-        if (!nearestNodeCoordinate) {
-          nearestNodeCoordinate = coordinate
-          continue
-        }
-
-        if (this.grid[nearestNodeCoordinate[1]][nearestNodeCoordinate[0]].weight > this.grid[coordinate[1]][coordinate[0]].weight) {
-          nearestNodeCoordinate = coordinate
-        }
-      }
-
-      node = this.grid[nearestNodeCoordinate[1]][nearestNodeCoordinate[0]]
-
-      
       while (!pathFound) {
         shortestPath.unshift(node)
         if (node.isStartNode) pathFound = true
 
-        node = this.grid[node.parentNode[1]][node.parentNode[0]]
-      }
+        const arrayCoordinate = this.getAllDirectionOfNode(node)
+        let nearestNodeCoordinate = null
 
+        for (let coordinate of arrayCoordinate) {
+          if (!this.checkNodeInsideGrid(coordinate)) continue
+
+          if (!nearestNodeCoordinate) {
+            nearestNodeCoordinate = coordinate
+            continue
+          }
+
+          if (this.grid[nearestNodeCoordinate[1]][nearestNodeCoordinate[0]].weight > this.grid[coordinate[1]][coordinate[0]].weight) {
+            nearestNodeCoordinate = coordinate
+          }
+        }
+
+        node = this.grid[nearestNodeCoordinate[1]][nearestNodeCoordinate[0]]
+      }
       for (let pathNode of shortestPath) {
         pathNode.isPath = true
         await this.timer(100)
@@ -287,6 +291,10 @@ export default {
 
   &.end-node {
     background-color: red;
+  }
+
+  &.weight-node {
+    background-color: gold;
   }
 
   &.visited-node {
