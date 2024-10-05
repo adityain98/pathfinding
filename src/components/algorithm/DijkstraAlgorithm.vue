@@ -45,12 +45,13 @@ export default {
         coordinateY: 0,
         weight: maxWeight,
         parentNode: [0, 0],
-        isWeightNode: false,
         isStartNode: false,
         isEndNode: false,
-        isWall: false,
         isVisited: false,
-        isPath: false
+        isPath: false,
+        // modifier
+        isWeightNode: false,
+        isWall: false,
       },
       startCoordinate: [15, 9],
       endCoordinate: [15, 14],
@@ -104,19 +105,24 @@ export default {
             coordinateX: xCoordinate,
             coordinateY: yCoordinate,
             isStartNode:
-              xCoordinate === this.startCoordinate[0] && yCoordinate === this.startCoordinate[1],
+              xCoordinate === this.startCoordinate[0] &&
+              yCoordinate === this.startCoordinate[1],
             isEndNode:
-              xCoordinate === this.endCoordinate[0] && yCoordinate === this.endCoordinate[1],
+              xCoordinate === this.endCoordinate[0] &&
+              yCoordinate === this.endCoordinate[1],
             weight:
-              xCoordinate === this.startCoordinate[0] && yCoordinate === this.startCoordinate[1]
+              xCoordinate === this.startCoordinate[0] &&
+              yCoordinate === this.startCoordinate[1]
                 ? 0
                 : maxWeight,
             parentNode:
-              xCoordinate === this.startCoordinate[0] && yCoordinate === this.startCoordinate[1]
+              xCoordinate === this.startCoordinate[0] &&
+              yCoordinate === this.startCoordinate[1]
                 ? this.startCoordinate
                 : [0, 0]
           })
         }
+
         this.grid.push(yArray)
       }
     },
@@ -155,7 +161,7 @@ export default {
       return true
     },
     async checkNode (parentNode, coordinate, isDiagonal) {
-      // if (!this.looping) return
+      if (!this.looping) return
 
       if (!this.checkNodeInsideGrid(coordinate)) return null
 
@@ -231,16 +237,16 @@ export default {
       }
     },
     getAllDirectionOfNode (node) {
-      const upSideCoordinate = this.upSideCoordinate(node)
-      const rightSideCoordinate = this.rightSideCoordinate(node)
-      const downSideCoordinate = this.downSideCoordinate(node)
-      const leftSideCoordinate = this.leftSideCoordinate(node)
-      const upRightSideCoordinate = this.upRightSideCoordinate(node)
-      const downRightSideCoordinate = this.downRightSideCoordinate(node)
-      const downLeftSideCoordinate = this.downLeftSideCoordinate(node)
-      const upLeftSideCoordinate = this.upLeftSideCoordinate(node)
+      // const upSideCoordinate = this.upSideCoordinate(node)
+      // const rightSideCoordinate = this.rightSideCoordinate(node)
+      // const downSideCoordinate = this.downSideCoordinate(node)
+      // const leftSideCoordinate = this.leftSideCoordinate(node)
+      // const upRightSideCoordinate = this.upRightSideCoordinate(node)
+      // const downRightSideCoordinate = this.downRightSideCoordinate(node)
+      // const downLeftSideCoordinate = this.downLeftSideCoordinate(node)
+      // const upLeftSideCoordinate = this.upLeftSideCoordinate(node)
 
-      return [upSideCoordinate, rightSideCoordinate, downSideCoordinate, leftSideCoordinate, upRightSideCoordinate, downRightSideCoordinate, downLeftSideCoordinate, upLeftSideCoordinate]
+      return [this.upSideCoordinate(node), this.rightSideCoordinate(node), this.downSideCoordinate(node), this.leftSideCoordinate(node), this.upRightSideCoordinate(node), this.downRightSideCoordinate(node), this.downLeftSideCoordinate(node), this.upLeftSideCoordinate(node)]
     },
     async startAlgorithm () {
       this.looping = true
@@ -250,24 +256,24 @@ export default {
         const node = this.openNodes[0]
         this.openNodes.shift()
 
-        const upSideCoordinate = this.upSideCoordinate(node)
-        const rightSideCoordinate = this.rightSideCoordinate(node)
-        const downSideCoordinate = this.downSideCoordinate(node)
-        const leftSideCoordinate = this.leftSideCoordinate(node)
+        // const upSideCoordinate = this.upSideCoordinate(node)
+        // const rightSideCoordinate = this.rightSideCoordinate(node)
+        // const downSideCoordinate = this.downSideCoordinate(node)
+        // const leftSideCoordinate = this.leftSideCoordinate(node)
 
-        const upRightSideCoordinate = this.upRightSideCoordinate(node)
-        const downRightSideCoordinate = this.downRightSideCoordinate(node)
-        const downLeftSideCoordinate = this.downLeftSideCoordinate(node)
-        const upLeftSideCoordinate = this.upLeftSideCoordinate(node)
+        // const upRightSideCoordinate = this.upRightSideCoordinate(node)
+        // const downRightSideCoordinate = this.downRightSideCoordinate(node)
+        // const downLeftSideCoordinate = this.downLeftSideCoordinate(node)
+        // const upLeftSideCoordinate = this.upLeftSideCoordinate(node)
 
-        await this.checkNode(node, upSideCoordinate)
-        await this.checkNode(node, upRightSideCoordinate, true)
-        await this.checkNode(node, rightSideCoordinate)
-        await this.checkNode(node, downRightSideCoordinate, true)
-        await this.checkNode(node, downSideCoordinate)
-        await this.checkNode(node, downLeftSideCoordinate, true)
-        await this.checkNode(node, leftSideCoordinate)
-        await this.checkNode(node, upLeftSideCoordinate, true)
+        await this.checkNode(node, this.upSideCoordinate())
+        await this.checkNode(node, this.upRightSideCoordinate(), true)
+        await this.checkNode(node, this.rightSideCoordinate())
+        await this.checkNode(node, this.downRightSideCoordinate(), true)
+        await this.checkNode(node, this.downSideCoordinate())
+        await this.checkNode(node, this.downLeftSideCoordinate(), true)
+        await this.checkNode(node, this.leftSideCoordinate())
+        await this.checkNode(node, this.upLeftSideCoordinate(), true)
 
 
         if (!this.openNodes.length) {
