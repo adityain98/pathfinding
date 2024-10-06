@@ -55,16 +55,12 @@
         </div>
       </div>
     </div>
-
-    <button @click="startAlgorithm()">start</button>
-    <button @click="initGrid()">Reset</button>
-    <button @click="canSearchDiagonally = !canSearchDiagonally">can search diagonally: {{ canSearchDiagonally }}</button>
   </div>
 </template>
 <script>
 const maxWeight = 1000000
 const defaultStartCoordinate = [0, 0]
-const defaultEndCoordinate = [15, 14]
+let defaultEndCoordinate = [15, 14]
 
 export default {
   data () {
@@ -107,20 +103,33 @@ export default {
     }
   },
   mounted () {
-    const navbarHeight = 250
+    const innerHeight = window.innerHeight
+    const innerWidth = window.innerWidth
+    const navbarHeight = innerWidth > 1340
+      ? 250
+      : 396
+
+    if (innerWidth <= 1340) {
+      this.gridWidth = 30
+      defaultEndCoordinate = [10, 5]
+    }
+
     const gridWrapper = document.getElementById('grid-wrapper')
     const gridWrapperStyle = getComputedStyle(gridWrapper)
     const paddingX = parseFloat(gridWrapperStyle.paddingLeft) + parseFloat(gridWrapperStyle.paddingRight)
     const paddingY = parseFloat(gridWrapperStyle.paddingTop) + parseFloat(gridWrapperStyle.paddingBottom)
 
     const nodeDimension = Math.floor((gridWrapper.offsetWidth - paddingX)/this.gridWidth)
-    const totalGridY = Math.floor((window.innerHeight - navbarHeight - paddingY)/nodeDimension)
+    const totalGridY = Math.floor((innerHeight - navbarHeight - paddingY)/nodeDimension)
 
     this.gridDimension = nodeDimension
     this.gridHeight = totalGridY
     this.initGrid()
   },
   methods: {
+    toggleDiagonalSearch () {
+      this.canSearchDiagonally = !this.canSearchDiagonally
+    },
     resetGrid () {
       this.looping = false
 
@@ -370,14 +379,13 @@ export default {
         this.openNodes.shift()
 
         await this.checkNode(node, this.upSideCoordinate(node))
-        await this.checkNode(node, this.upRightSideCoordinate(node), true)
-        await this.checkNode(node, this.rightSideCoordinate(node))
-        await this.checkNode(node, this.downRightSideCoordinate(node), true)
         await this.checkNode(node, this.downSideCoordinate(node))
+        await this.checkNode(node, this.upRightSideCoordinate(node), true)
         await this.checkNode(node, this.downLeftSideCoordinate(node), true)
+        await this.checkNode(node, this.rightSideCoordinate(node))
         await this.checkNode(node, this.leftSideCoordinate(node))
+        await this.checkNode(node, this.downRightSideCoordinate(node), true)
         await this.checkNode(node, this.upLeftSideCoordinate(node), true)
-
 
         if (!this.openNodes.length) {
           this.looping = false
