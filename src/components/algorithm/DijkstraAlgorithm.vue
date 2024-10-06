@@ -2,8 +2,8 @@
   <div
     @mousedown.left="isMouseDown = true"
     @mouseup.left="isMouseDown = false"
+    oncontextmenu="return false;"
   >
-    {{ isMouseDown }}
     <div v-for="(xGrid, yIndex) in grid" :key="yIndex" class="x-grid">
       <div
         v-for="node in xGrid"
@@ -19,9 +19,25 @@
             'wall-node': node.isWall,
           }
         ]"
-        @mousedown.left="setModifier(node, 'isWall')"
+        @mousedown.left="
+          mouseDownNode(node);
+          setModifier(node, 'isWall')
+        "
+        @mouseup.left="mouseHoldedNode = null"
         @mousedown.right="setModifier(node, 'isWeightNode')"
         @mouseover.left="isMouseDown === true && setModifier(node, 'isWall')"
+        @mouseenter="
+          mouseHoldedNode &&
+          setNode(node, mouseHoldedNode, true)
+        "
+        @mouseleave="
+          (
+            node.isStartNode ||
+            node.isEndNode
+          ) &&
+          mouseHoldedNode &&
+          setNode(node, node.isStartNode ? 'start' : 'end', false)
+        "
       >
       </div>
     </div>
@@ -58,12 +74,15 @@ export default {
         isWeightNode: false,
         isWall: false,
       },
-      startCoordinate: [15, 9],
-      endCoordinate: [15, 14],
+      startCoordinate: defaultStartCoordinate,
+      endCoordinate: defaultEndCoordinate,
       openNodes: [],
       looping: false,
       isMouseDown: false,
-      canSearchDiagonally: false
+      mouseHoldedNode: null,
+      canSearchDiagonally: false,
+      shortestPathFound: false,
+      foundedEndNode: [0, 0]
     }
   },
   computed: {
@@ -83,6 +102,38 @@ export default {
       this.startCoordinate = defaultStartCoordinate
       this.endCoordinate = defaultEndCoordinate
     },
+    setNode (node, variant, value) {
+      this.resetModifierNode(node)
+
+      const isStart = variant === 'start'
+
+      const nodeKey = isStart ? 'isStartNode' : 'isEndNode'
+      const nodeKeyCoordinate = isStart ? 'startCoordinate' : 'endCoordinate'
+
+      node[nodeKey] = value
+
+      if (value) {
+        this[nodeKeyCoordinate] = node.coordinate
+      }
+
+      if (isStart) {
+        node.weight = value ? 0 : maxWeight
+        node.parentNode = value ? this.startCoordinate : [0, 0]
+      }
+
+    },
+    mouseDownNode (node) {
+      if (
+        node.isStartNode ||
+        node.isEndNode
+      ) this.mouseHoldedNode = node.isStartNode ? 'start' : 'end'
+    },
+    mouseUpNode (node) {
+      if (
+        node.isStartNode ||
+        node.isEndNode
+      ) this.mouseHoldedNode = null
+    },
     resetModifierNode (node, selectedModifier) {
       const modifierKey = ['isWall', 'isWeightNode']
 
@@ -93,6 +144,12 @@ export default {
       }
     },
     setModifier (node, modifier = 'isWall') {
+      if (
+        node.isStartNode ||
+        node.isEndNode ||
+        this.mouseHoldedNode
+      ) return
+
       this.resetModifierNode(node, modifier)
 
       node[modifier] = !node[modifier]
@@ -199,13 +256,13 @@ export default {
       node.isVisited = true
       
       if (node.isEndNode) {
-        this.looping = false
-        this.visualizePath(node)
-        return
+        this.shortestPathFound = true
+        this.foundedEndNode = node.coordinate
       }
-      
-
-      this.pushOpenNode(node)
+    
+      if (!this.shortestPathFound) {
+        this.pushOpenNode(node)
+      }
       await this.timer(10)
 
       return true
@@ -265,6 +322,7 @@ export default {
     },
     async startAlgorithm () {
       this.looping = true
+      this.shortestPathFound = false
       this.openNodes.push(this.grid[this.startCoordinate[1]][this.startCoordinate[0]])
 
       while (this.looping) {
@@ -283,6 +341,9 @@ export default {
 
         if (!this.openNodes.length) {
           this.looping = false
+          if (this.shortestPathFound) {
+            this.visualizePath(this.grid[this.foundedEndNode[1]][this.foundedEndNode[0]])
+          }
         }
       }
     }
@@ -302,7 +363,6 @@ export default {
   justify-content: center;
   align-items: center;
   background-color: white;
-  transition: 0.5s;
 
   &.start-node {
     background-color: rebeccapurple;
