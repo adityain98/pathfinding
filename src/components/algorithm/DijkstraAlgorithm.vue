@@ -1,7 +1,9 @@
 <template>
   <div
-    @mousedown.left="isMouseDown = true"
-    @mouseup.left="isMouseDown = false"
+    @mousedown.left="isLeftMouseDown = true"
+    @mouseup.left="isLeftMouseDown = false"
+    @mousedown.right="isRightMouseDown = true"
+    @mouseup.right="isRightMouseDown = false"
     oncontextmenu="return false;"
   >
     <div v-for="(xGrid, yIndex) in grid" :key="yIndex" class="x-grid">
@@ -25,7 +27,10 @@
         "
         @mouseup.left="mouseHoldedNode = null"
         @mousedown.right="setModifier(node, 'isWeightNode')"
-        @mouseover.left="isMouseDown === true && setModifier(node, 'isWall')"
+        @mouseover="
+          isLeftMouseDown === true && setModifier(node, 'isWall');
+          isRightMouseDown === true && setModifier(node, 'isWeightNode')
+        "
         @mouseenter="
           mouseHoldedNode &&
           setNode(node, mouseHoldedNode, true)
@@ -78,7 +83,8 @@ export default {
       endCoordinate: defaultEndCoordinate,
       openNodes: [],
       looping: false,
-      isMouseDown: false,
+      isLeftMouseDown: false,
+      isRightMouseDown: false,
       mouseHoldedNode: null,
       canSearchDiagonally: false,
       shortestPathFound: false,
