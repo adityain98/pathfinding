@@ -60,7 +60,7 @@
 <script>
 const maxWeight = 1000000
 const defaultStartCoordinate = [0, 0]
-let defaultEndCoordinate = [15, 14]
+let defaultEndCoordinate = [15, 5]
 
 export default {
   data () {
@@ -294,16 +294,16 @@ export default {
       }
 
       if (node.isWeightNode) {
-        addedWeight += 20
+        addedWeight += 100
       }
 
       if (addedWeight >= node.weight) return
 
       node.parentNode = parentNode.coordinate
       node.weight = addedWeight
-      node.isVisited = true
       
       if (node.isEndNode) {
+        this.looping = false
         this.shortestPathFound = true
         this.foundedEndNode = node.coordinate
       }
@@ -316,6 +316,13 @@ export default {
       return true
     },
     async pushOpenNode (node) {
+      for (const [index, openNode] of this.openNodes.entries()) {
+        if (openNode.weight > node.weight) {
+          this.openNodes.splice(index, 0, node)
+          return
+        }
+      }
+
       this.openNodes.push(node)
     },
     async visualizePath (endNode) {
@@ -376,6 +383,7 @@ export default {
 
       while (this.looping) {
         const node = this.openNodes[0]
+        node.isVisited = true
         this.openNodes.shift()
 
         await this.checkNode(node, this.upSideCoordinate(node))
@@ -389,9 +397,12 @@ export default {
 
         if (!this.openNodes.length) {
           this.looping = false
-          if (this.shortestPathFound) {
-            this.visualizePath(this.grid[this.foundedEndNode[1]][this.foundedEndNode[0]])
-          }
+        }
+
+        if (this.shortestPathFound) {
+          const endNode = this.grid[this.foundedEndNode[1]][this.foundedEndNode[0]]
+          endNode.isVisited = true
+          this.visualizePath(endNode)
         }
       }
     }

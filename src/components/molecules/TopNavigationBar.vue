@@ -113,7 +113,7 @@
         </div>
         <br>
         <div>
-          On the other hand, weighted nodes will be added <strong>20</strong> from the nearest node.
+          On the other hand, weighted nodes will be added <strong>100</strong> from the nearest node.
         </div>
       </div>
     </PDialog>
@@ -211,6 +211,10 @@ export default {
 
   h4 {
     margin-bottom: 8px;
+
+    .ov-icon {
+      cursor: pointer;
+    }
   }
 
   .algorithm-trivia {
@@ -218,11 +222,6 @@ export default {
   }
 
   .pathfinding-rules {
-    h4 {
-      .ov-icon {
-        cursor: pointer;
-      }
-    }
 
     .pathfinding-rules-items {
       display: flex;
