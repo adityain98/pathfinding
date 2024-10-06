@@ -1,5 +1,9 @@
 <template>
-  <div @mousedown.left="test">
+  <div
+    @mousedown.left="isMouseDown = true"
+    @mouseup.left="isMouseDown = false"
+  >
+    {{ isMouseDown }}
     <div v-for="(xGrid, yIndex) in grid" :key="yIndex" class="x-grid">
       <div
         v-for="node in xGrid"
@@ -15,14 +19,16 @@
             'wall-node': node.isWall,
           }
         ]"
-        @click.left="setModifier(node, 'isWall')"
-        @click.right="setModifier(node, 'isWeightNode')"
+        @mousedown.left="setModifier(node, 'isWall')"
+        @mousedown.right="setModifier(node, 'isWeightNode')"
+        @mouseover.left="isMouseDown === true && setModifier(node, 'isWall')"
       >
       </div>
     </div>
 
     <button @click="startAlgorithm()">start</button>
     <button @click="initGrid()">Reset</button>
+    <button @click="canSearchDiagonally = !canSearchDiagonally">can search diagonally: {{ canSearchDiagonally }}</button>
   </div>
 </template>
 <script>
@@ -55,7 +61,9 @@ export default {
       startCoordinate: [15, 9],
       endCoordinate: [15, 14],
       openNodes: [],
-      looping: false
+      looping: false,
+      isMouseDown: false,
+      canSearchDiagonally: false
     }
   },
   computed: {
@@ -162,6 +170,8 @@ export default {
     async checkNode (parentNode, coordinate, isDiagonal) {
       if (!this.looping) return
 
+      if (isDiagonal && !this.canSearchDiagonally) return
+
       if (!this.checkNodeInsideGrid(coordinate)) return null
 
       const node = this.grid[coordinate[1]][coordinate[0]]
@@ -236,16 +246,22 @@ export default {
       }
     },
     getAllDirectionOfNode (node) {
-      // const upSideCoordinate = this.upSideCoordinate(node)
-      // const rightSideCoordinate = this.rightSideCoordinate(node)
-      // const downSideCoordinate = this.downSideCoordinate(node)
-      // const leftSideCoordinate = this.leftSideCoordinate(node)
-      // const upRightSideCoordinate = this.upRightSideCoordinate(node)
-      // const downRightSideCoordinate = this.downRightSideCoordinate(node)
-      // const downLeftSideCoordinate = this.downLeftSideCoordinate(node)
-      // const upLeftSideCoordinate = this.upLeftSideCoordinate(node)
-
-      return [this.upSideCoordinate(node), this.rightSideCoordinate(node), this.downSideCoordinate(node), this.leftSideCoordinate(node), this.upRightSideCoordinate(node), this.downRightSideCoordinate(node), this.downLeftSideCoordinate(node), this.upLeftSideCoordinate(node)]
+      let arrCoordinate = [
+        this.upSideCoordinate(node),
+        this.rightSideCoordinate(node),
+        this.downSideCoordinate(node),
+        this.leftSideCoordinate(node)
+      ]
+      if (this.canSearchDiagonally) {
+        arrCoordinate = [
+          ...arrCoordinate,
+          this.upRightSideCoordinate(node),
+          this.downRightSideCoordinate(node),
+          this.downLeftSideCoordinate(node),
+          this.upLeftSideCoordinate(node)
+        ]
+      }
+      return arrCoordinate
     },
     async startAlgorithm () {
       this.looping = true
@@ -254,16 +270,6 @@ export default {
       while (this.looping) {
         const node = this.openNodes[0]
         this.openNodes.shift()
-
-        // const upSideCoordinate = this.upSideCoordinate(node)
-        // const rightSideCoordinate = this.rightSideCoordinate(node)
-        // const downSideCoordinate = this.downSideCoordinate(node)
-        // const leftSideCoordinate = this.leftSideCoordinate(node)
-
-        // const upRightSideCoordinate = this.upRightSideCoordinate(node)
-        // const downRightSideCoordinate = this.downRightSideCoordinate(node)
-        // const downLeftSideCoordinate = this.downLeftSideCoordinate(node)
-        // const upLeftSideCoordinate = this.upLeftSideCoordinate(node)
 
         await this.checkNode(node, this.upSideCoordinate(node))
         await this.checkNode(node, this.upRightSideCoordinate(node), true)
