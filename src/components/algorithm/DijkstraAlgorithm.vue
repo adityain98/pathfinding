@@ -6,7 +6,7 @@
     @mouseup.right="isRightMouseDown = false"
     oncontextmenu="return false;"
   >
-    <div class="grid-wrapper">
+    <div id="grid-wrapper" class="grid-wrapper">
       <div v-for="(xGrid, yIndex) in grid" :key="yIndex" class="x-grid">
         <div
           v-for="node in xGrid"
@@ -22,6 +22,10 @@
               'wall-node': node.isWall,
             }
           ]"
+          :style="{
+            width: gridDimension + 'px',
+            height: gridDimension + 'px'
+          }"
           @mousedown.left="
             mouseDownNode(node);
             setModifier(node, 'isWall')
@@ -59,15 +63,16 @@
 </template>
 <script>
 const maxWeight = 1000000
-const defaultStartCoordinate = [15, 9]
+const defaultStartCoordinate = [0, 0]
 const defaultEndCoordinate = [15, 14]
 
 export default {
   data () {
     return {
       grid: [],
-      gridWitdh: 40,
+      gridWidth: 50,
       gridHeight: 15,
+      gridDimension: 30,
       distanceWeight: 10,
       diagonalDistanceWeight: 15,
       nodeTemplate: {
@@ -101,7 +106,18 @@ export default {
       return this.openNodes.map(node => node.coordinate)
     }
   },
-  created () {
+  mounted () {
+    const navbarHeight = 250
+    const gridWrapper = document.getElementById('grid-wrapper')
+    const gridWrapperStyle = getComputedStyle(gridWrapper)
+    const paddingX = parseFloat(gridWrapperStyle.paddingLeft) + parseFloat(gridWrapperStyle.paddingRight)
+    const paddingY = parseFloat(gridWrapperStyle.paddingTop) + parseFloat(gridWrapperStyle.paddingBottom)
+
+    const nodeDimension = Math.floor((gridWrapper.offsetWidth - paddingX)/this.gridWidth)
+    const totalGridY = Math.floor((window.innerHeight - navbarHeight - paddingY)/nodeDimension)
+
+    this.gridDimension = nodeDimension
+    this.gridHeight = totalGridY
     this.initGrid()
   },
   methods: {
@@ -112,6 +128,18 @@ export default {
       this.openNodes = []
       this.startCoordinate = defaultStartCoordinate
       this.endCoordinate = defaultEndCoordinate
+    },
+    resetAlgorithm () {
+      this.grid.forEach(xGrid => {
+        xGrid.forEach(node => {
+          node.isVisited = false
+          node.isPath = false
+          node.weight = maxWeight
+
+          if (node.isStartNode) this.setNode(node, 'start', true)
+          if (node.isEndNode) this.setNode(node, 'end', true)
+        })
+      })
     },
     setNode (node, variant, value) {
       this.resetModifierNode(node)
@@ -173,7 +201,7 @@ export default {
 
       for (let yCoordinate = 0; yCoordinate < this.gridHeight; yCoordinate++) {
         const yArray = []
-        for (let xCoordinate = 0; xCoordinate < this.gridWitdh; xCoordinate++) {
+        for (let xCoordinate = 0; xCoordinate < this.gridWidth; xCoordinate++) {
           yArray.push({
             ...JSON.parse(JSON.stringify(this.nodeTemplate)),
             coordinate: [xCoordinate, yCoordinate],
@@ -228,7 +256,7 @@ export default {
     checkNodeInsideGrid (coordinate) {
       if (
         coordinate[0] < 0 ||
-        coordinate[0] >= this.gridWitdh ||
+        coordinate[0] >= this.gridWidth ||
         coordinate[1] < 0 ||
         coordinate[1] >= this.gridHeight
       ) return false
@@ -332,6 +360,7 @@ export default {
       return arrCoordinate
     },
     async startAlgorithm () {
+      this.resetAlgorithm()
       this.looping = true
       this.shortestPathFound = false
       this.openNodes.push(this.grid[this.startCoordinate[1]][this.startCoordinate[0]])
@@ -362,18 +391,29 @@ export default {
 }
 </script>
 <style lang="scss" scoped>
+.grid-wrapper {
+  padding: 24px;
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .x-grid {
   display: flex;
 }
 
 .node-element {
-  width: 30px;
-  height: 30px;
   border: 1px solid #415a77;
   display: flex;
   justify-content: center;
   align-items: center;
   background-color: white;
+
+  // prevent double border
+  margin-top: -1px;
+  margin-left: -1px;
 
   &.start-node {
     // background-color: rebeccapurple;
