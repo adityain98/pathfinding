@@ -334,23 +334,7 @@ export default {
         shortestPath.unshift(node)
         if (node.isStartNode) pathFound = true
 
-        const arrayCoordinate = this.getAllDirectionOfNode(node)
-        let nearestNodeCoordinate = null
-
-        for (let coordinate of arrayCoordinate) {
-          if (!this.checkNodeInsideGrid(coordinate)) continue
-
-          if (!nearestNodeCoordinate) {
-            nearestNodeCoordinate = coordinate
-            continue
-          }
-
-          if (this.grid[nearestNodeCoordinate[1]][nearestNodeCoordinate[0]].weight > this.grid[coordinate[1]][coordinate[0]].weight) {
-            nearestNodeCoordinate = coordinate
-          }
-        }
-
-        node = this.grid[nearestNodeCoordinate[1]][nearestNodeCoordinate[0]]
+        node = this.grid[node.parentNode[1]][node.parentNode[0]]
       }
       for (let pathNode of shortestPath) {
         pathNode.isPath = true
@@ -403,6 +387,7 @@ export default {
           const endNode = this.grid[this.foundedEndNode[1]][this.foundedEndNode[0]]
           endNode.isVisited = true
           this.visualizePath(endNode)
+          this.openNodes = []
         }
       }
     }
