@@ -1,6 +1,13 @@
 <template>
   <div>
-    <DijkstraAlgorithm></DijkstraAlgorithm>
+    <top-navigation-bar
+      @toggleDiagonalSearch="toggleDiagonalSearch"
+      @startAlgorithm="startAlgorithm"
+      @initGrid="initGrid"
+    ></top-navigation-bar>
+    <DijkstraAlgorithm
+      ref="algorithm"
+    ></DijkstraAlgorithm>
   </div>
 </template>
 <script>
@@ -8,10 +15,35 @@ import { defineAsyncComponent } from 'vue'
 
 export default {
   components: {
-    DijkstraAlgorithm: defineAsyncComponent(
-      () => import('@/components/algorithm/DijkstraAlgorithm.vue')
-    )
+    TopNavigationBar: defineAsyncComponent(() => import('@/components/molecules/TopNavigationBar.vue')),
+    DijkstraAlgorithm: defineAsyncComponent(() => import('@/components/algorithm/DijkstraAlgorithm.vue'))
+  },
+  data () {
+    return {
+      isMounted: false
+    }
+  },
+  computed: {
+    canSearchDiagonally () {
+      if (!this.isMounted) return false
+      return this.$refs.algorithm.canSearchDiagonally
+    }
+  },
+  mounted () {
+    this.isMounted = true
+  },
+  methods: {
+    toggleDiagonalSearch () {
+      this.$refs.algorithm.toggleDiagonalSearch()
+    },
+    startAlgorithm () {
+      this.$refs.algorithm.startAlgorithm()
+    },
+    initGrid () {
+      this.$refs.algorithm.initGrid()
+    }
   }
 }
 </script>
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+</style>

@@ -1,41 +1,74 @@
 <template>
-  <div @mousedown.left="test">
-    <div v-for="(xGrid, yIndex) in grid" :key="yIndex" class="x-grid">
-      <div
-        v-for="node in xGrid"
-        :key="node.coordinate"
-        class="node-element"
-        :class="[
-          {
-            'start-node': node.isStartNode,
-            'end-node': node.isEndNode,
-            'weight-node': node.isWeightNode,
-            'visited-node': node.isVisited,
-            'path-node': node.isPath,
-            'wall-node': node.isWall,
-          }
-        ]"
-        @click.left="setModifier(node, 'isWall')"
-        @click.right="setModifier(node, 'isWeightNode')"
-      >
+  <div
+    @mousedown.left="isLeftMouseDown = true"
+    @mouseup.left="isLeftMouseDown = false"
+    @mousedown.right="isRightMouseDown = true"
+    @mouseup.right="isRightMouseDown = false"
+    oncontextmenu="return false;"
+  >
+    <div id="grid-wrapper" class="grid-wrapper">
+      <div v-for="(xGrid, yIndex) in grid" :key="yIndex" class="x-grid">
+        <div
+          v-for="node in xGrid"
+          :key="node.coordinate"
+          class="node-element"
+          :class="[
+            {
+              'start-node': node.isStartNode,
+              'end-node': node.isEndNode,
+              'weight-node': node.isWeightNode,
+              'visited-node': node.isVisited,
+              'path-node': node.isPath,
+              'wall-node': node.isWall,
+            }
+          ]"
+          :style="{
+            width: gridDimension + 'px',
+            height: gridDimension + 'px'
+          }"
+          @mousedown.left="
+            mouseDownNode(node);
+            setModifier(node, 'isWall')
+          "
+          @mouseup.left="mouseHoldedNode = null"
+          @mousedown.right="setModifier(node, 'isWeightNode')"
+          @mouseover="
+            isLeftMouseDown === true && setModifier(node, 'isWall');
+            isRightMouseDown === true && setModifier(node, 'isWeightNode')
+          "
+          @mouseenter="
+            mouseHoldedNode &&
+            setNode(node, mouseHoldedNode, true)
+          "
+          @mouseleave="
+            (
+              node.isStartNode ||
+              node.isEndNode
+            ) &&
+            mouseHoldedNode &&
+            setNode(node, node.isStartNode ? 'start' : 'end', false)
+          "
+        >
+          <v-icon v-if="node.isStartNode" name="gi-caveman" class="pointer-event-none icon-start-node"/>
+          <v-icon v-if="node.isEndNode" name="gi-deer-head" class="pointer-event-none icon-start-node"/>
+          <v-icon v-if="node.isWeightNode" name="bi-tree-fill" class="pointer-event-none icon-start-node"/>
+        </div>
       </div>
     </div>
-
-    <button @click="startAlgorithm()">start</button>
-    <button @click="initGrid()">Reset</button>
   </div>
 </template>
 <script>
 const maxWeight = 1000000
-const defaultStartCoordinate = [15, 9]
-const defaultEndCoordinate = [15, 14]
+const defaultStartCoordinate = [0, 0]
+let defaultEndCoordinate = [15, 14]
 
 export default {
   data () {
     return {
       grid: [],
-      gridWitdh: 20,
+      gridWidth: 50,
       gridHeight: 15,
+      gridDimension: 30,
       distanceWeight: 10,
       diagonalDistanceWeight: 15,
       nodeTemplate: {
@@ -52,10 +85,16 @@ export default {
         isWeightNode: false,
         isWall: false,
       },
-      startCoordinate: [15, 9],
-      endCoordinate: [15, 14],
+      startCoordinate: defaultStartCoordinate,
+      endCoordinate: defaultEndCoordinate,
       openNodes: [],
-      looping: false
+      looping: false,
+      isLeftMouseDown: false,
+      isRightMouseDown: false,
+      mouseHoldedNode: null,
+      canSearchDiagonally: false,
+      shortestPathFound: false,
+      foundedEndNode: [0, 0]
     }
   },
   computed: {
@@ -63,10 +102,34 @@ export default {
       return this.openNodes.map(node => node.coordinate)
     }
   },
-  created () {
+  mounted () {
+    const innerHeight = window.innerHeight
+    const innerWidth = window.innerWidth
+    const navbarHeight = innerWidth > 1340
+      ? 250
+      : 396
+
+    if (innerWidth <= 1340) {
+      this.gridWidth = 30
+      defaultEndCoordinate = [10, 5]
+    }
+
+    const gridWrapper = document.getElementById('grid-wrapper')
+    const gridWrapperStyle = getComputedStyle(gridWrapper)
+    const paddingX = parseFloat(gridWrapperStyle.paddingLeft) + parseFloat(gridWrapperStyle.paddingRight)
+    const paddingY = parseFloat(gridWrapperStyle.paddingTop) + parseFloat(gridWrapperStyle.paddingBottom)
+
+    const nodeDimension = Math.floor((gridWrapper.offsetWidth - paddingX)/this.gridWidth)
+    const totalGridY = Math.floor((innerHeight - navbarHeight - paddingY)/nodeDimension)
+
+    this.gridDimension = nodeDimension
+    this.gridHeight = totalGridY
     this.initGrid()
   },
   methods: {
+    toggleDiagonalSearch () {
+      this.canSearchDiagonally = !this.canSearchDiagonally
+    },
     resetGrid () {
       this.looping = false
 
@@ -74,6 +137,50 @@ export default {
       this.openNodes = []
       this.startCoordinate = defaultStartCoordinate
       this.endCoordinate = defaultEndCoordinate
+    },
+    resetAlgorithm () {
+      this.grid.forEach(xGrid => {
+        xGrid.forEach(node => {
+          node.isVisited = false
+          node.isPath = false
+          node.weight = maxWeight
+
+          if (node.isStartNode) this.setNode(node, 'start', true)
+          if (node.isEndNode) this.setNode(node, 'end', true)
+        })
+      })
+    },
+    setNode (node, variant, value) {
+      this.resetModifierNode(node)
+
+      const isStart = variant === 'start'
+
+      const nodeKey = isStart ? 'isStartNode' : 'isEndNode'
+      const nodeKeyCoordinate = isStart ? 'startCoordinate' : 'endCoordinate'
+
+      node[nodeKey] = value
+
+      if (value) {
+        this[nodeKeyCoordinate] = node.coordinate
+      }
+
+      if (isStart) {
+        node.weight = value ? 0 : maxWeight
+        node.parentNode = value ? this.startCoordinate : [0, 0]
+      }
+
+    },
+    mouseDownNode (node) {
+      if (
+        node.isStartNode ||
+        node.isEndNode
+      ) this.mouseHoldedNode = node.isStartNode ? 'start' : 'end'
+    },
+    mouseUpNode (node) {
+      if (
+        node.isStartNode ||
+        node.isEndNode
+      ) this.mouseHoldedNode = null
     },
     resetModifierNode (node, selectedModifier) {
       const modifierKey = ['isWall', 'isWeightNode']
@@ -85,6 +192,12 @@ export default {
       }
     },
     setModifier (node, modifier = 'isWall') {
+      if (
+        node.isStartNode ||
+        node.isEndNode ||
+        this.mouseHoldedNode
+      ) return
+
       this.resetModifierNode(node, modifier)
 
       node[modifier] = !node[modifier]
@@ -97,7 +210,7 @@ export default {
 
       for (let yCoordinate = 0; yCoordinate < this.gridHeight; yCoordinate++) {
         const yArray = []
-        for (let xCoordinate = 0; xCoordinate < this.gridWitdh; xCoordinate++) {
+        for (let xCoordinate = 0; xCoordinate < this.gridWidth; xCoordinate++) {
           yArray.push({
             ...JSON.parse(JSON.stringify(this.nodeTemplate)),
             coordinate: [xCoordinate, yCoordinate],
@@ -152,7 +265,7 @@ export default {
     checkNodeInsideGrid (coordinate) {
       if (
         coordinate[0] < 0 ||
-        coordinate[0] >= this.gridWitdh ||
+        coordinate[0] >= this.gridWidth ||
         coordinate[1] < 0 ||
         coordinate[1] >= this.gridHeight
       ) return false
@@ -161,6 +274,8 @@ export default {
     },
     async checkNode (parentNode, coordinate, isDiagonal) {
       if (!this.looping) return
+
+      if (isDiagonal && !this.canSearchDiagonally) return
 
       if (!this.checkNodeInsideGrid(coordinate)) return null
 
@@ -189,13 +304,13 @@ export default {
       node.isVisited = true
       
       if (node.isEndNode) {
-        this.looping = false
-        this.visualizePath(node)
-        return
+        this.shortestPathFound = true
+        this.foundedEndNode = node.coordinate
       }
-      
-
-      this.pushOpenNode(node)
+    
+      if (!this.shortestPathFound) {
+        this.pushOpenNode(node)
+      }
       await this.timer(10)
 
       return true
@@ -232,51 +347,51 @@ export default {
       }
       for (let pathNode of shortestPath) {
         pathNode.isPath = true
-        await this.timer(100)
+        await this.timer(50)
       }
     },
     getAllDirectionOfNode (node) {
-      // const upSideCoordinate = this.upSideCoordinate(node)
-      // const rightSideCoordinate = this.rightSideCoordinate(node)
-      // const downSideCoordinate = this.downSideCoordinate(node)
-      // const leftSideCoordinate = this.leftSideCoordinate(node)
-      // const upRightSideCoordinate = this.upRightSideCoordinate(node)
-      // const downRightSideCoordinate = this.downRightSideCoordinate(node)
-      // const downLeftSideCoordinate = this.downLeftSideCoordinate(node)
-      // const upLeftSideCoordinate = this.upLeftSideCoordinate(node)
-
-      return [this.upSideCoordinate(node), this.rightSideCoordinate(node), this.downSideCoordinate(node), this.leftSideCoordinate(node), this.upRightSideCoordinate(node), this.downRightSideCoordinate(node), this.downLeftSideCoordinate(node), this.upLeftSideCoordinate(node)]
+      let arrCoordinate = [
+        this.upSideCoordinate(node),
+        this.rightSideCoordinate(node),
+        this.downSideCoordinate(node),
+        this.leftSideCoordinate(node)
+      ]
+      if (this.canSearchDiagonally) {
+        arrCoordinate = [
+          ...arrCoordinate,
+          this.upRightSideCoordinate(node),
+          this.downRightSideCoordinate(node),
+          this.downLeftSideCoordinate(node),
+          this.upLeftSideCoordinate(node)
+        ]
+      }
+      return arrCoordinate
     },
     async startAlgorithm () {
+      this.resetAlgorithm()
       this.looping = true
+      this.shortestPathFound = false
       this.openNodes.push(this.grid[this.startCoordinate[1]][this.startCoordinate[0]])
 
       while (this.looping) {
         const node = this.openNodes[0]
         this.openNodes.shift()
 
-        // const upSideCoordinate = this.upSideCoordinate(node)
-        // const rightSideCoordinate = this.rightSideCoordinate(node)
-        // const downSideCoordinate = this.downSideCoordinate(node)
-        // const leftSideCoordinate = this.leftSideCoordinate(node)
-
-        // const upRightSideCoordinate = this.upRightSideCoordinate(node)
-        // const downRightSideCoordinate = this.downRightSideCoordinate(node)
-        // const downLeftSideCoordinate = this.downLeftSideCoordinate(node)
-        // const upLeftSideCoordinate = this.upLeftSideCoordinate(node)
-
         await this.checkNode(node, this.upSideCoordinate(node))
-        await this.checkNode(node, this.upRightSideCoordinate(node), true)
-        await this.checkNode(node, this.rightSideCoordinate(node))
-        await this.checkNode(node, this.downRightSideCoordinate(node), true)
         await this.checkNode(node, this.downSideCoordinate(node))
+        await this.checkNode(node, this.upRightSideCoordinate(node), true)
         await this.checkNode(node, this.downLeftSideCoordinate(node), true)
+        await this.checkNode(node, this.rightSideCoordinate(node))
         await this.checkNode(node, this.leftSideCoordinate(node))
+        await this.checkNode(node, this.downRightSideCoordinate(node), true)
         await this.checkNode(node, this.upLeftSideCoordinate(node), true)
-
 
         if (!this.openNodes.length) {
           this.looping = false
+          if (this.shortestPathFound) {
+            this.visualizePath(this.grid[this.foundedEndNode[1]][this.foundedEndNode[0]])
+          }
         }
       }
     }
@@ -284,42 +399,75 @@ export default {
 }
 </script>
 <style lang="scss" scoped>
+.grid-wrapper {
+  padding: 24px;
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .x-grid {
   display: flex;
 }
 
 .node-element {
-  width: 50px;
-  height: 50px;
-  border: 1px solid black;
+  border: 1px solid #415a77;
   display: flex;
   justify-content: center;
   align-items: center;
   background-color: white;
-  transition: 0.5s;
+
+  // prevent double border
+  margin-top: -1px;
+  margin-left: -1px;
 
   &.start-node {
-    background-color: rebeccapurple;
+    // background-color: rebeccapurple;
   }
 
   &.end-node {
-    background-color: red;
+    // background-color: red;
   }
 
   &.weight-node {
-    background-color: gold;
+    // background-color: #5C816C;
   }
 
   &.visited-node {
-    background-color: blue;
+    animation: visited-animation linear 0.5s;
+    background-color: #219ebc;
   }
 
   &.path-node {
-    background-color: yellow;
+    background-color: #faedcd;
   }
 
   &.wall-node {
-    background-color: grey;
+    background-color: #1b263b;
   }
+
+  .icon-start-node {
+    width: 80%;
+    height: 80%;
+  }
+
+  .icon-wall-node {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+@-webkit-keyframes visited-animation { 
+  0% { background-color: #fcbf49; }
+  40% { background-color: #8ecae6; }
+  100% { background-color: #219ebc; } 
+
+} 
+@keyframes visited-animation { 
+  0% { background-color: #fcbf49; }
+  40% { background-color: #8ecae6; }
+  100% { background-color: #219ebc; } 
 }
 </style>
