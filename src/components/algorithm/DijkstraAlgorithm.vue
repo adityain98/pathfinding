@@ -6,44 +6,49 @@
     @mouseup.right="isRightMouseDown = false"
     oncontextmenu="return false;"
   >
-    <div v-for="(xGrid, yIndex) in grid" :key="yIndex" class="x-grid">
-      <div
-        v-for="node in xGrid"
-        :key="node.coordinate"
-        class="node-element"
-        :class="[
-          {
-            'start-node': node.isStartNode,
-            'end-node': node.isEndNode,
-            'weight-node': node.isWeightNode,
-            'visited-node': node.isVisited,
-            'path-node': node.isPath,
-            'wall-node': node.isWall,
-          }
-        ]"
-        @mousedown.left="
-          mouseDownNode(node);
-          setModifier(node, 'isWall')
-        "
-        @mouseup.left="mouseHoldedNode = null"
-        @mousedown.right="setModifier(node, 'isWeightNode')"
-        @mouseover="
-          isLeftMouseDown === true && setModifier(node, 'isWall');
-          isRightMouseDown === true && setModifier(node, 'isWeightNode')
-        "
-        @mouseenter="
-          mouseHoldedNode &&
-          setNode(node, mouseHoldedNode, true)
-        "
-        @mouseleave="
-          (
-            node.isStartNode ||
-            node.isEndNode
-          ) &&
-          mouseHoldedNode &&
-          setNode(node, node.isStartNode ? 'start' : 'end', false)
-        "
-      >
+    <div class="grid-wrapper">
+      <div v-for="(xGrid, yIndex) in grid" :key="yIndex" class="x-grid">
+        <div
+          v-for="node in xGrid"
+          :key="node.coordinate"
+          class="node-element"
+          :class="[
+            {
+              'start-node': node.isStartNode,
+              'end-node': node.isEndNode,
+              'weight-node': node.isWeightNode,
+              'visited-node': node.isVisited,
+              'path-node': node.isPath,
+              'wall-node': node.isWall,
+            }
+          ]"
+          @mousedown.left="
+            mouseDownNode(node);
+            setModifier(node, 'isWall')
+          "
+          @mouseup.left="mouseHoldedNode = null"
+          @mousedown.right="setModifier(node, 'isWeightNode')"
+          @mouseover="
+            isLeftMouseDown === true && setModifier(node, 'isWall');
+            isRightMouseDown === true && setModifier(node, 'isWeightNode')
+          "
+          @mouseenter="
+            mouseHoldedNode &&
+            setNode(node, mouseHoldedNode, true)
+          "
+          @mouseleave="
+            (
+              node.isStartNode ||
+              node.isEndNode
+            ) &&
+            mouseHoldedNode &&
+            setNode(node, node.isStartNode ? 'start' : 'end', false)
+          "
+        >
+          <v-icon v-if="node.isStartNode" name="gi-caveman" class="pointer-event-none icon-start-node"/>
+          <v-icon v-if="node.isEndNode" name="gi-deer-head" class="pointer-event-none icon-start-node"/>
+          <v-icon v-if="node.isWeightNode" name="bi-tree-fill" class="pointer-event-none icon-start-node"/>
+        </div>
       </div>
     </div>
 
@@ -61,7 +66,7 @@ export default {
   data () {
     return {
       grid: [],
-      gridWitdh: 20,
+      gridWitdh: 40,
       gridHeight: 15,
       distanceWeight: 10,
       diagonalDistanceWeight: 15,
@@ -305,7 +310,7 @@ export default {
       }
       for (let pathNode of shortestPath) {
         pathNode.isPath = true
-        await this.timer(100)
+        await this.timer(50)
       }
     },
     getAllDirectionOfNode (node) {
@@ -362,36 +367,59 @@ export default {
 }
 
 .node-element {
-  width: 50px;
-  height: 50px;
-  border: 1px solid black;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #415a77;
   display: flex;
   justify-content: center;
   align-items: center;
   background-color: white;
 
   &.start-node {
-    background-color: rebeccapurple;
+    // background-color: rebeccapurple;
   }
 
   &.end-node {
-    background-color: red;
+    // background-color: red;
   }
 
   &.weight-node {
-    background-color: gold;
+    // background-color: #5C816C;
   }
 
   &.visited-node {
-    background-color: blue;
+    animation: visited-animation linear 0.5s;
+    background-color: #219ebc;
   }
 
   &.path-node {
-    background-color: yellow;
+    background-color: #faedcd;
   }
 
   &.wall-node {
-    background-color: grey;
+    background-color: #1b263b;
   }
+
+  .icon-start-node {
+    width: 80%;
+    height: 80%;
+  }
+
+  .icon-wall-node {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+@-webkit-keyframes visited-animation { 
+  0% { background-color: #fcbf49; }
+  40% { background-color: #8ecae6; }
+  100% { background-color: #219ebc; } 
+
+} 
+@keyframes visited-animation { 
+  0% { background-color: #fcbf49; }
+  40% { background-color: #8ecae6; }
+  100% { background-color: #219ebc; } 
 }
 </style>
