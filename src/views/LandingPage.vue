@@ -1,6 +1,7 @@
 <template>
   <div>
     <top-navigation-bar
+      @sidewinderMazeGenerator="sidewinderMazeGenerator"
       @toggleDiagonalSearch="toggleDiagonalSearch"
       @startAlgorithm="startAlgorithm"
       @initGrid="initGrid"
@@ -33,6 +34,9 @@ export default {
     this.isMounted = true
   },
   methods: {
+    sidewinderMazeGenerator () {
+      this.$refs.algorithm.sidewinderMazeGenerator()
+    },
     toggleDiagonalSearch () {
       this.$refs.algorithm.toggleDiagonalSearch()
     },

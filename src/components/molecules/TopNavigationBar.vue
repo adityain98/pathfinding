@@ -5,7 +5,7 @@
         <h4 style="margin-right: 24px">Pathfinding Visualizer</h4>
       </template>
       <template #item="{ item, props, hasSubmenu, root }">
-        <a v-ripple class="flex items-center" v-bind="props.action">
+        <span v-ripple class="flex items-center" v-bind="props.action">
           <span v-if="item.disabled" class="ml-2">{{ item.label }}</span>
           <span v-else class="ml-2">{{ item.label }}</span>
           <i
@@ -16,7 +16,7 @@
             ]"
           ></i>
           <img v-if="item.disabled" src="@/assets/coming-soon.png" style="width: 40px">
-        </a>
+        </span>
       </template>
       <template #end>
         <a href="https://github.com/adityain98/pathfinding" target="_blank" style="color: #333">
@@ -140,25 +140,6 @@ export default {
   },
   data() {
     return {
-      items: [
-        {
-          label: 'Pathfinding Algorithms',
-          hasSubmenu: true,
-          items: [
-            {
-              label: `Dijkstra's Algorithm`
-            },
-            {
-              label: 'A* Search Algorithm',
-              disabled: true
-            }
-          ]
-        },
-        {
-          label: 'Maze Algorithms',
-          disabled: true
-        }
-      ],
       isOpenDialogRules: false,
       isOpenDialogPlay: false,
       canSearchDiagonallyData: false,
@@ -174,12 +155,42 @@ export default {
         this.canSearchDiagonallyData = !this.canSearchDiagonallyData
         this.$emit('toggleDiagonalSearch')
       }
+    },
+    items () {
+      return [
+        {
+          label: 'Pathfinding Algorithms',
+          hasSubmenu: true,
+          items: [
+            {
+              label: `Dijkstra's Algorithm`
+            },
+            {
+              label: 'A* Search Algorithm',
+              disabled: true
+            }
+          ]
+        },
+        {
+          label: 'Maze Algorithms',
+          hasSubmenu: true,
+          items: [
+            {
+              label: 'Sidewinder Maze',
+              command: this.sidewinderMazeGenerator
+            }
+          ]
+        }
+      ]
     }
   },
   mounted () {
     this.canSearchDiagonallyData = this.canSearchDiagonally
   },
   methods: {
+    sidewinderMazeGenerator () {
+      this.$emit('sidewinderMazeGenerator')
+    },
     toggleDialogRules () {
       this.isOpenDialogRules = !this.isOpenDialogRules
     },

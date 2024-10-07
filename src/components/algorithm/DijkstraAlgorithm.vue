@@ -20,11 +20,12 @@
               'visited-node': node.isVisited,
               'path-node': node.isPath,
               'wall-node': node.isWall,
+              'open-node': !node.isVisited && node.weight !== 0 && node.weight < 1000000,
             }
           ]"
           :style="{
-            width: gridDimension + 'px',
-            height: gridDimension + 'px'
+            width: nodeDimension + 'px',
+            height: nodeDimension + 'px'
           }"
           @mousedown.left="
             mouseDownNode(node);
@@ -62,13 +63,17 @@ const maxWeight = 1000000
 const defaultStartCoordinate = [0, 0]
 let defaultEndCoordinate = [15, 5]
 
+import { sidewinderMazeGenerator } from '@/functions/sidewinderMaze.js'
+
+import timer from '@/functions/timer.js'
+
 export default {
   data () {
     return {
       grid: [],
       gridWidth: 50,
       gridHeight: 15,
-      gridDimension: 30,
+      nodeDimension: 30,
       distanceWeight: 10,
       diagonalDistanceWeight: 15,
       nodeTemplate: {
@@ -122,11 +127,16 @@ export default {
     const nodeDimension = Math.floor((gridWrapper.offsetWidth - paddingX)/this.gridWidth)
     const totalGridY = Math.floor((innerHeight - navbarHeight - paddingY)/nodeDimension)
 
-    this.gridDimension = nodeDimension
+    this.nodeDimension = nodeDimension
     this.gridHeight = totalGridY
     this.initGrid()
   },
   methods: {
+    async sidewinderMazeGenerator () {
+      const coordinates = await sidewinderMazeGenerator(this.grid, [this.gridWidth, this.gridHeight])
+      this.startCoordinate = coordinates.startCoordinate
+      this.endCoordinate = coordinates.endCoordinate
+    },
     toggleDiagonalSearch () {
       this.canSearchDiagonally = !this.canSearchDiagonally
     },
@@ -201,9 +211,6 @@ export default {
       this.resetModifierNode(node, modifier)
 
       node[modifier] = !node[modifier]
-    },
-    timer (ms) {
-      return new Promise(res => setTimeout(res, ms))
     },
     initGrid () {
       this.resetGrid()
@@ -311,7 +318,7 @@ export default {
       if (!this.shortestPathFound) {
         this.pushOpenNode(node)
       }
-      await this.timer(10)
+      await timer(10)
 
       return true
     },
@@ -338,7 +345,7 @@ export default {
       }
       for (let pathNode of shortestPath) {
         pathNode.isPath = true
-        await this.timer(50)
+        await timer(50)
       }
     },
     getAllDirectionOfNode (node) {
@@ -442,6 +449,11 @@ export default {
 
   &.wall-node {
     background-color: #1b263b;
+    transition: 0.5s;
+  }
+
+  &.open-node {
+    background-color: #fcbf49;
   }
 
   .icon-start-node {
