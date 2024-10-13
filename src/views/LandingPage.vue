@@ -8,6 +8,7 @@
     ></top-navigation-bar>
     <DefaultGrid
       ref="algorithm"
+      :algorithm="algorithm"
     ></DefaultGrid>
   </div>
 </template>
@@ -28,6 +29,9 @@ export default {
     canSearchDiagonally () {
       if (!this.isMounted) return false
       return this.$refs.algorithm.canSearchDiagonally
+    },
+    algorithm () {
+      return this.$route.meta.algorithm
     }
   },
   mounted () {

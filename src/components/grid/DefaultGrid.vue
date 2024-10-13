@@ -6,7 +6,6 @@
     @mouseup.right="isRightMouseDown = false"
     oncontextmenu="return false;"
   >
-    <div @click="test">wow</div>
     <div id="grid-wrapper" class="grid-wrapper">
       <div v-for="(xGrid, yIndex) in grid" :key="yIndex" class="x-grid">
         <div
@@ -71,6 +70,12 @@ import { sidewinderMazeGenerator } from '@/functions/sidewinderMaze.js'
 import timer from '@/functions/timer.js'
 
 export default {
+  props: {
+    algorithm: {
+      type: String,
+      default: 'dijkstra'
+    }
+  },
   data () {
     return {
       grid: [],
@@ -396,13 +401,6 @@ export default {
           visualizePath: this.visualizePath
         })
       }
-    },
-    test () {
-      // // this.resetGrid()
-      // // console.log(JSON.parse(JSON.stringify(this)), `123123`)
-      // console.log(this.asb)
-      // dijkstraStartAlgorithm(this)
-      // console.log(this.asb)
     }
   }
 }
