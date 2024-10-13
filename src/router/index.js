@@ -6,6 +6,24 @@ const router = createRouter({
     {
       path: '/',
       name: 'landing-page',
+      redirect: {
+        path: '/dijkstra'
+      }
+    },
+    {
+      path: '/dijkstra',
+      name: 'landing-page',
+      meta: {
+        algorithm: 'dijkstra'
+      },
+      component: () => import('@/views/LandingPage.vue')
+    },
+    {
+      path: '/a-star',
+      name: 'landing-page',
+      meta: {
+        algorithm: 'aStar'
+      },
       component: () => import('@/views/LandingPage.vue')
     }
   ]

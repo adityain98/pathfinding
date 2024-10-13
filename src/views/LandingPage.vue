@@ -17,7 +17,7 @@ import { defineAsyncComponent } from 'vue'
 export default {
   components: {
     TopNavigationBar: defineAsyncComponent(() => import('@/components/molecules/TopNavigationBar.vue')),
-    DijkstraAlgorithm: defineAsyncComponent(() => import('@/components/algorithm/DijkstraAlgorithm.vue'))
+    DijkstraAlgorithm: defineAsyncComponent(() => import('@/components/grid/DijkstraAlgorithm.vue'))
   },
   data () {
     return {
