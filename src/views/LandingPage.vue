@@ -6,9 +6,9 @@
       @startAlgorithm="startAlgorithm"
       @initGrid="initGrid"
     ></top-navigation-bar>
-    <DijkstraAlgorithm
+    <DefaultGrid
       ref="algorithm"
-    ></DijkstraAlgorithm>
+    ></DefaultGrid>
   </div>
 </template>
 <script>
@@ -17,7 +17,7 @@ import { defineAsyncComponent } from 'vue'
 export default {
   components: {
     TopNavigationBar: defineAsyncComponent(() => import('@/components/molecules/TopNavigationBar.vue')),
-    DijkstraAlgorithm: defineAsyncComponent(() => import('@/components/grid/DijkstraAlgorithm.vue'))
+    DefaultGrid: defineAsyncComponent(() => import('@/components/grid/DefaultGrid.vue'))
   },
   data () {
     return {
