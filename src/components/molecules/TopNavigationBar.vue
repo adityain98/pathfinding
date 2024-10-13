@@ -133,7 +133,11 @@ export default {
     PButton
   },
   props: {
-    canSearchDiagonally: Boolean
+    canSearchDiagonally: Boolean,
+    algorithm: {
+      type: String,
+      default: 'dijkstra'
+    }
   },
   data() {
     return {
@@ -160,13 +164,13 @@ export default {
           items: [
             {
               label: `Dijkstra's Algorithm`,
-              tag: 'router-link',
-              path: '/dijkstra'
+              algorithm: 'dijkstra',
+              command: this.changeAlgorithm
             },
             {
               label: 'A* Algorithm',
-              tag: 'router-link',
-              path: '/a-star'
+              algorithm: 'aStar',
+              command: this.changeAlgorithm
             }
           ]
         },
@@ -183,7 +187,7 @@ export default {
       ]
     },
     algorithmTrivia () {
-      if (this.$route.meta.algorithm === 'aStar') {
+      if (this.algorithm === 'aStar') {
         return {
           title: 'A* Algorithm',
           description: `A* (A-Star) is an informed search algorithm used for finding the shortest path between nodes in a graph. It's similar to Dijkstra's algorithm but incorporates a heuristic to prioritize nodes, making it faster and more efficient in many cases, especially in pathfinding for games and maps.`
@@ -200,6 +204,9 @@ export default {
     this.canSearchDiagonallyData = this.canSearchDiagonally
   },
   methods: {
+    changeAlgorithm (e) {
+      this.$emit('changeAlgorithm', e.item.algorithm)
+    },
     sidewinderMazeGenerator () {
       this.$emit('sidewinderMazeGenerator')
     },

@@ -1,6 +1,8 @@
 <template>
   <div>
     <top-navigation-bar
+      :algorithm="algorithm"
+      @changeAlgorithm="changeAlgorithm"
       @sidewinderMazeGenerator="sidewinderMazeGenerator"
       @toggleDiagonalSearch="toggleDiagonalSearch"
       @startAlgorithm="startAlgorithm"
@@ -38,16 +40,14 @@ export default {
     return {
       isMounted: false,
       dialogVisible: false,
-      isMobile: isMobile
+      isMobile: isMobile,
+      algorithm: 'dijkstra'
     }
   },
   computed: {
     canSearchDiagonally () {
       if (!this.isMounted) return false
       return this.$refs.algorithm.canSearchDiagonally
-    },
-    algorithm () {
-      return this.$route.meta.algorithm
     }
   },
   mounted () {
@@ -70,6 +70,9 @@ export default {
     },
     initGrid () {
       this.$refs.algorithm.initGrid()
+    },
+    changeAlgorithm (e) {
+      this.algorithm = e
     }
   }
 }

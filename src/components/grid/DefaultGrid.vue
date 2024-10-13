@@ -422,7 +422,7 @@ export default {
     }
   },
   watch: {
-    '$route.meta.algorithm' () {
+    algorithm () {
       this.looping = false
 
       this.$nextTick(() => {
