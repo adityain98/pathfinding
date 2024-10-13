@@ -6,7 +6,6 @@
     @mouseup.right="isRightMouseDown = false"
     oncontextmenu="return false;"
   >
-    <div @click="test">wow</div>
     <div id="grid-wrapper" class="grid-wrapper">
       <div v-for="(xGrid, yIndex) in grid" :key="yIndex" class="x-grid">
         <div
@@ -64,8 +63,6 @@ const maxWeight = 1000000
 const defaultStartCoordinate = [0, 0]
 let defaultEndCoordinate = [15, 5]
 
-import { startAlgorithm as dijkstraStartAlgorithm } from '@/functions/dijkstraAlgorithm.js'
-
 import { sidewinderMazeGenerator } from '@/functions/sidewinderMaze.js'
 
 import timer from '@/functions/timer.js'
@@ -84,8 +81,6 @@ export default {
         coordinateX: 0,
         coordinateY: 0,
         weight: maxWeight,
-        // heuristic weight
-        hWeight: 0,
         parentNode: [0, 0],
         isStartNode: false,
         isEndNode: false,
@@ -104,8 +99,7 @@ export default {
       mouseHoldedNode: null,
       canSearchDiagonally: false,
       shortestPathFound: false,
-      foundedEndNode: [0, 0],
-      asb: false
+      foundedEndNode: [0, 0]
     }
   },
   computed: {
@@ -378,31 +372,31 @@ export default {
       this.shortestPathFound = false
       this.openNodes.push(this.grid[this.startCoordinate[1]][this.startCoordinate[0]])
 
-      setTimeout(() => {
-        this.looping = false
-      }, 5000)
-
       while (this.looping) {
-        await dijkstraStartAlgorithm(this, {
-          checkNode: this.checkNode,
-          upSideCoordinate: this.upSideCoordinate,
-          downSideCoordinate: this.downSideCoordinate,
-          upRightSideCoordinate: this.upRightSideCoordinate,
-          downLeftSideCoordinate: this.downLeftSideCoordinate,
-          rightSideCoordinate: this.rightSideCoordinate,
-          leftSideCoordinate: this.leftSideCoordinate,
-          downRightSideCoordinate: this.downRightSideCoordinate,
-          upLeftSideCoordinate: this.upLeftSideCoordinate,
-          visualizePath: this.visualizePath
-        })
+        const node = this.openNodes[0]
+        node.isVisited = true
+        this.openNodes.shift()
+
+        await this.checkNode(node, this.upSideCoordinate(node))
+        await this.checkNode(node, this.downSideCoordinate(node))
+        await this.checkNode(node, this.upRightSideCoordinate(node), true)
+        await this.checkNode(node, this.downLeftSideCoordinate(node), true)
+        await this.checkNode(node, this.rightSideCoordinate(node))
+        await this.checkNode(node, this.leftSideCoordinate(node))
+        await this.checkNode(node, this.downRightSideCoordinate(node), true)
+        await this.checkNode(node, this.upLeftSideCoordinate(node), true)
+
+        if (!this.openNodes.length) {
+          this.looping = false
+        }
+
+        if (this.shortestPathFound) {
+          const endNode = this.grid[this.foundedEndNode[1]][this.foundedEndNode[0]]
+          endNode.isVisited = true
+          this.visualizePath(endNode)
+          this.openNodes = []
+        }
       }
-    },
-    test () {
-      // // this.resetGrid()
-      // // console.log(JSON.parse(JSON.stringify(this)), `123123`)
-      // console.log(this.asb)
-      // dijkstraStartAlgorithm(this)
-      // console.log(this.asb)
     }
   }
 }
