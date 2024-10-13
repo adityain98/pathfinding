@@ -478,13 +478,13 @@ export default {
     background-color: #faedcd;
   }
 
+  &.open-node {
+    background-color: #fcbf49;
+  }
+
   &.wall-node {
     background-color: #1b263b;
     transition: 0.5s;
-  }
-
-  &.open-node {
-    background-color: #fcbf49;
   }
 
   .icon-start-node {
