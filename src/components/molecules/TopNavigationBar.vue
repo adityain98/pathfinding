@@ -25,10 +25,6 @@
       </template>
     </menubar>
 
-    <div v-if="isMobile" style="width: 100vw; padding: 24px 60px">
-      <PMessage severity="warn">We are terribly sorry, the experience on mobile devices isn't quite there yet. We will always improve the app in the future.</PMessage>
-    </div>
-
     <div class="algorithm-info">
       <div class="algorithm-trivia">
         <h4>
@@ -128,16 +124,13 @@ import Menubar from 'primevue/menubar'
 import PDialog from 'primevue/dialog'
 import PCheckbox from 'primevue/checkbox'
 import PButton from 'primevue/button'
-import PMessage from 'primevue/message'
-import { isMobile } from 'mobile-device-detect'
 
 export default {
   components: {
     Menubar,
     PDialog,
     PCheckbox,
-    PButton,
-    PMessage
+    PButton
   },
   props: {
     canSearchDiagonally: Boolean
@@ -146,8 +139,7 @@ export default {
     return {
       isOpenDialogRules: false,
       isOpenDialogPlay: false,
-      canSearchDiagonallyData: false,
-      isMobile: isMobile
+      canSearchDiagonallyData: false
     }
   },
   computed: {

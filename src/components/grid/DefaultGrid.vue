@@ -64,7 +64,7 @@
 </template>
 <script>
 const maxWeight = 1000000
-const defaultStartCoordinate = [5, 5]
+let defaultStartCoordinate = [5, 5]
 let defaultEndCoordinate = [20, 5]
 
 import { startAlgorithm as dijkstraStartAlgorithm } from '@/functions/dijkstraAlgorithm.js'
@@ -137,18 +137,12 @@ export default {
       ? 260
       : 260
 
-    if (innerWidth <= 425) {
-      this.gridWidth = 11
-      defaultEndCoordinate = [8, 5]
-    } else if (innerWidth <= 767) {
+    if (innerWidth <= 767) {
       this.gridWidth = 15
-      defaultEndCoordinate = [10, 5]
     } else if (innerWidth <= 1024) {
       this.gridWidth = 25
-      defaultEndCoordinate = [10, 5]
     } else if (innerWidth <= 1340) {
       this.gridWidth = 30
-      defaultEndCoordinate = [10, 5]
     }
 
     const gridWrapper = document.getElementById('grid-wrapper')
@@ -161,6 +155,13 @@ export default {
 
     this.nodeDimension = nodeDimension
     this.gridHeight = totalGridY
+
+    const halfWidth = Math.floor(this.gridWidth/2)
+    const halfHeight = Math.floor(this.gridHeight/2)
+
+    defaultEndCoordinate = [halfWidth + 5, halfHeight]
+    defaultStartCoordinate= [halfWidth - 5, halfHeight]
+
     this.initGrid()
   },
   methods: {
