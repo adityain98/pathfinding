@@ -53,6 +53,10 @@
           <v-icon v-if="node.isStartNode" name="gi-caveman" class="pointer-event-none icon-start-node"/>
           <v-icon v-if="node.isEndNode" name="gi-deer-head" class="pointer-event-none icon-start-node"/>
           <v-icon v-if="node.isWeightNode" name="bi-tree-fill" class="pointer-event-none icon-start-node"/>
+          <!-- for debug purposes -->
+          <!-- <span v-if="node.weight < 10000" style="font-size: 10px;">
+            {{ node.hWeight }}
+          </span> -->
         </div>
       </div>
     </div>
@@ -60,10 +64,16 @@
 </template>
 <script>
 const maxWeight = 1000000
-const defaultStartCoordinate = [0, 0]
-let defaultEndCoordinate = [15, 5]
+const defaultStartCoordinate = [5, 5]
+let defaultEndCoordinate = [20, 5]
 
 import { startAlgorithm as dijkstraStartAlgorithm } from '@/functions/dijkstraAlgorithm.js'
+import { startAlgorithm as aStarStartAlgorithm } from '@/functions/aStarAlgorithm.js'
+
+const startAlgorithm = {
+  dijkstraStartAlgorithm,
+  aStarStartAlgorithm
+}
 
 import { sidewinderMazeGenerator } from '@/functions/sidewinderMaze.js'
 
@@ -91,6 +101,8 @@ export default {
         weight: maxWeight,
         // heuristic weight
         hWeight: 0,
+        // g weight
+        gWeight: 0,
         parentNode: [0, 0],
         isStartNode: false,
         isEndNode: false,
@@ -122,10 +134,19 @@ export default {
     const innerHeight = window.innerHeight
     const innerWidth = window.innerWidth
     const navbarHeight = innerWidth > 1340
-      ? 250
-      : 396
+      ? 260
+      : 260
 
-    if (innerWidth <= 1340) {
+    if (innerWidth <= 425) {
+      this.gridWidth = 11
+      defaultEndCoordinate = [8, 5]
+    } else if (innerWidth <= 767) {
+      this.gridWidth = 15
+      defaultEndCoordinate = [10, 5]
+    } else if (innerWidth <= 1024) {
+      this.gridWidth = 25
+      defaultEndCoordinate = [10, 5]
+    } else if (innerWidth <= 1340) {
       this.gridWidth = 30
       defaultEndCoordinate = [10, 5]
     }
@@ -165,6 +186,8 @@ export default {
           node.isVisited = false
           node.isPath = false
           node.weight = maxWeight
+          node.hWeight = 0
+          node.gWeight = maxWeight
 
           if (node.isStartNode) this.setNode(node, 'start', true)
           if (node.isEndNode) this.setNode(node, 'end', true)
@@ -187,9 +210,9 @@ export default {
 
       if (isStart) {
         node.weight = value ? 0 : maxWeight
+        node.gWeight = value ? 0 : maxWeight
         node.parentNode = value ? this.startCoordinate : [0, 0]
       }
-
     },
     mouseDownNode (node) {
       if (
@@ -306,9 +329,9 @@ export default {
       ) return null
 
       let addedWeight = 0
-      addedWeight = parentNode.weight + this.distanceWeight
+      addedWeight = parentNode.gWeight + this.distanceWeight + node.hWeight
       if (isDiagonal) {
-        addedWeight = parentNode.weight + this.diagonalDistanceWeight
+        addedWeight = parentNode.gWeight + this.diagonalDistanceWeight + node.hWeight
       }
 
       if (node.isWeightNode) {
@@ -319,6 +342,7 @@ export default {
 
       node.parentNode = parentNode.coordinate
       node.weight = addedWeight
+      node.gWeight = addedWeight - node.hWeight
       
       if (node.isEndNode) {
         this.looping = false
@@ -356,7 +380,7 @@ export default {
       }
       for (let pathNode of shortestPath) {
         pathNode.isPath = true
-        await timer(50)
+        await timer(30)
       }
     },
     getAllDirectionOfNode (node) {
@@ -381,26 +405,28 @@ export default {
       this.resetAlgorithm()
       this.looping = true
       this.shortestPathFound = false
-      this.openNodes.push(this.grid[this.startCoordinate[1]][this.startCoordinate[0]])
 
-      setTimeout(() => {
-        this.looping = false
-      }, 5000)
+      await startAlgorithm[`${this.algorithm}StartAlgorithm`](this, {
+        checkNode: this.checkNode,
+        upSideCoordinate: this.upSideCoordinate,
+        downSideCoordinate: this.downSideCoordinate,
+        upRightSideCoordinate: this.upRightSideCoordinate,
+        downLeftSideCoordinate: this.downLeftSideCoordinate,
+        rightSideCoordinate: this.rightSideCoordinate,
+        leftSideCoordinate: this.leftSideCoordinate,
+        downRightSideCoordinate: this.downRightSideCoordinate,
+        upLeftSideCoordinate: this.upLeftSideCoordinate,
+        visualizePath: this.visualizePath
+      })
+    }
+  },
+  watch: {
+    '$route.meta.algorithm' () {
+      this.looping = false
 
-      while (this.looping) {
-        await dijkstraStartAlgorithm(this, {
-          checkNode: this.checkNode,
-          upSideCoordinate: this.upSideCoordinate,
-          downSideCoordinate: this.downSideCoordinate,
-          upRightSideCoordinate: this.upRightSideCoordinate,
-          downLeftSideCoordinate: this.downLeftSideCoordinate,
-          rightSideCoordinate: this.rightSideCoordinate,
-          leftSideCoordinate: this.leftSideCoordinate,
-          downRightSideCoordinate: this.downRightSideCoordinate,
-          upLeftSideCoordinate: this.upLeftSideCoordinate,
-          visualizePath: this.visualizePath
-        })
-      }
+      this.$nextTick(() => {
+        this.resetAlgorithm()
+      })
     }
   }
 }

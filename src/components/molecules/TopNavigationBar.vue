@@ -5,7 +5,7 @@
         <h4 style="margin-right: 24px">Pathfinding Visualizer</h4>
       </template>
       <template #item="{ item, props, hasSubmenu, root }">
-        <span v-ripple class="flex items-center" v-bind="props.action">
+        <component :is="item.tag || 'span'" :to="item.path" :target="item.target" class="flex items-center" v-bind="props.action" aria-hidden="false">
           <span v-if="item.disabled" class="ml-2">{{ item.label }}</span>
           <span v-else class="ml-2">{{ item.label }}</span>
           <i
@@ -16,7 +16,7 @@
             ]"
           ></i>
           <img v-if="item.disabled" src="@/assets/coming-soon.png" style="width: 40px">
-        </span>
+        </component>
       </template>
       <template #end>
         <a href="https://github.com/adityain98/pathfinding" target="_blank" style="color: #333">
@@ -32,10 +32,10 @@
     <div class="algorithm-info">
       <div class="algorithm-trivia">
         <h4>
-          Dijkstra's Algorithm
+          {{ algorithmTrivia.title }}
         </h4>
         <div>
-          Dijkstra's algorithm is an algorithm for finding the shortest paths between nodes in a weighted graph
+          {{ algorithmTrivia.description }}
         </div>
       </div>
       <div class="pathfinding-rules">
@@ -71,6 +71,10 @@
           <div>
             <div class="path-node"></div>
             <p>Path Node</p>
+          </div>
+          <div>
+            <div class="open-node"></div>
+            <p>Open Node</p>
           </div>
         </div>
       </div>
@@ -113,7 +117,7 @@
         </div>
         <br>
         <div>
-          On the other hand, weighted nodes will be added <strong>100</strong> from the nearest node.
+          On the other hand, weighted nodes will be added <strong>100</strong>.
         </div>
       </div>
     </PDialog>
@@ -163,11 +167,14 @@ export default {
           hasSubmenu: true,
           items: [
             {
-              label: `Dijkstra's Algorithm`
+              label: `Dijkstra's Algorithm`,
+              tag: 'router-link',
+              path: '/dijkstra'
             },
             {
-              label: 'A* Search Algorithm',
-              disabled: true
+              label: 'A* Algorithm',
+              tag: 'router-link',
+              path: '/a-star'
             }
           ]
         },
@@ -182,6 +189,19 @@ export default {
           ]
         }
       ]
+    },
+    algorithmTrivia () {
+      if (this.$route.meta.algorithm === 'aStar') {
+        return {
+          title: 'A* Algorithm',
+          description: `A* (A-Star) is an informed search algorithm used for finding the shortest path between nodes in a graph. It's similar to Dijkstra's algorithm but incorporates a heuristic to prioritize nodes, making it faster and more efficient in many cases, especially in pathfinding for games and maps.`
+        }
+      }
+
+      return {
+        title: `Dijkstra's Algorithm`,
+        description: `Dijkstra's algorithm is a shortest path algorithm used to find the minimum distance between nodes in a graph. It works for graphs with non-negative edge weights and is commonly used in pathfinding and network routing.`
+      }
     }
   },
   mounted () {
@@ -230,6 +250,10 @@ export default {
 
   .algorithm-trivia {
     max-width: 430px;
+
+    div {
+      font-size: 14px;
+    }
   }
 
   .pathfinding-rules {
@@ -239,10 +263,10 @@ export default {
       align-items: flex-start;
       flex-wrap: wrap;
       flex-direction: column;
-      max-height: 100px;
+      max-height: 110px;
       gap: 16px;
 
-      .ov-icon, .wall-node, .visited-node, .path-node {
+      .ov-icon, .wall-node, .visited-node, .path-node, .open-node {
         width: 24px;
         height: 24px;
       }
@@ -264,6 +288,10 @@ export default {
       .path-node {
         background-color: #faedcd;
       }
+
+      .open-node {
+        background-color: #fcbf49;
+      }
     }
   }
 
@@ -281,6 +309,14 @@ export default {
 
   img {
     margin-top: 20px
+  }
+}
+
+@media screen and (max-width: 548px) {
+  .pathfinding-rules {
+    .pathfinding-rules-items {
+      max-height: 150px !important;
+    }
   }
 }
 </style>
